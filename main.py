@@ -4,6 +4,7 @@ from tensorflow import keras
 from typing import List
 import numpy as np
 from fastapi.middleware.cors import CORSMiddleware
+import json
 
 app = FastAPI()
 
@@ -16,6 +17,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+file_path = './categories.json' 
+categories = None
+
+with open(file_path, 'r') as file:
+    categories = json.load(file) 
+# print(categories)
 # Load the model once when the app starts
 model = keras.models.load_model('CNN1.keras')
 
@@ -38,12 +45,15 @@ async def predict(request: PredictionRequest):
     
     # Run the prediction
     y = model.predict(image, verbose=1)
-    print("******************")
+    # print("******************")
     print(y)
     top_3 = np.argsort(-y)[:, 0:3]  # Get top 3 predictions
 
+    preds = []
+    for p in top_3[0].tolist():
+        preds.append(categories[str(p)])
 
-    return top_3[0].tolist()
+    return preds
 
 if __name__ == "__main__":
     import uvicorn
